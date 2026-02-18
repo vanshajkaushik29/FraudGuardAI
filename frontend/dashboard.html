@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudGuard AI - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">FraudGuard AI</div>
+        <div class="nav-menu">
+            <span class="user-name" id="user-name"></span>
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" onclick="showSection('overview')">Overview</li>
+                <li onclick="showSection('transactions')">Transactions</li>
+                <li onclick="showSection('expenses')">Expenses</li>
+                <li onclick="showSection('fraud-alerts')">Fraud Alerts</li>
+                <li onclick="showSection('add-transaction')">Add Transaction</li>
+                <li onclick="showSection('add-expense')">Add Expense</li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overview" class="section active">
+                <h2>Dashboard Overview</h2>
+                <div class="stats-grid" id="dashboard-stats">
+                    <!-- Stats will be loaded here -->
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Category Breakdown</h3>
+                        <div id="category-chart" class="chart-container"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Monthly Trends</h3>
+                        <div id="trends-chart" class="chart-container"></div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="recent-activity-list" class="activity-list"></div>
+                </div>
+            </div>
+            
+            <!-- Transactions Section -->
+            <div id="transactions" class="section">
+                <h2>Transaction History</h2>
+                <div class="filter-bar">
+                    <input type="text" id="transaction-search" placeholder="Search transactions...">
+                    <button onclick="loadTransactions()" class="btn-secondary">Refresh</button>
+                </div>
+                <div id="transactions-list" class="transactions-list"></div>
+                <div id="transactions-pagination" class="pagination"></div>
+            </div>
+            
+            <!-- Expenses Section -->
+            <div id="expenses" class="section">
+                <h2>Expense Tracking</h2>
+                <div class="filter-bar">
+                    <select id="expense-category-filter">
+                        <option value="">All Categories</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Education">Education</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="date" id="expense-start-date">
+                    <input type="date" id="expense-end-date">
+                    <button onclick="loadExpenses()" class="btn-secondary">Filter</button>
+                </div>
+                <div id="expenses-list" class="expenses-list"></div>
+                <div id="expenses-pagination" class="pagination"></div>
+            </div>
+            
+            <!-- Fraud Alerts Section -->
+            <div id="fraud-alerts" class="section">
+                <h2>Fraud Alerts</h2>
+                <div id="fraud-alerts-list" class="fraud-alerts-list"></div>
+            </div>
+            
+            <!-- Add Transaction Section -->
+            <div id="add-transaction" class="section">
+                <h2>Add New Transaction</h2>
+                <form onsubmit="handleAddTransaction(event)" class="add-form">
+                    <div class="form-group">
+                        <label for="transaction-amount">Amount (₹)</label>
+                        <input type="number" id="transaction-amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-location">Location</label>
+                        <input type="text" id="transaction-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-time">Date & Time</label>
+                        <input type="datetime-local" id="transaction-time" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Check for Fraud & Save</button>
+                </form>
+                <div id="fraud-result" class="fraud-result" style="display: none;"></div>
+            </div>
+            
+            <!-- Add Expense Section -->
+            <div id="add-expense" class="section">
+                <h2>Add New Expense</h2>
+                <form onsubmit="handleAddExpense(event)" class="add-form">
+                    <div class="form-group">
+                        <label for="expense-amount">Amount (₹)</label>
+                        <input type="number" id="expense-amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-category">Category</label>
+                        <select id="expense-category" required>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Education">Education</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-description">Description</label>
+                        <input type="text" id="expense-description" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-date">Date</label>
+                        <input type="date" id="expense-date" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Expense</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
