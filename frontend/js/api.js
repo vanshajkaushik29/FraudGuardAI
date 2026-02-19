@@ -74,19 +74,17 @@ function logout() {
 }
 
 // Transaction APIs
-
-
-// Transaction APIs
-async function createTransaction(amount, location, time) {
-    // If time is already an ISO string, use it directly
+async function createTransaction(amount, location, time, description = '') {
     const data = {
         amount: parseFloat(amount),
         location: location,
-        time: time  // Now we're passing the ISO string directly
+        time: time,
+        description: description
     };
     console.log('API call with data:', data);
     return apiCall('/transactions', 'POST', data);
 }
+
 async function getTransactions(page = 1, limit = 10) {
     return apiCall(`/transactions?page=${page}&limit=${limit}`);
 }

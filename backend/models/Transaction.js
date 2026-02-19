@@ -16,6 +16,12 @@ const transactionSchema = new mongoose.Schema({
         required: [true, 'Please provide location'],
         trim: true
     },
+    description: {
+        type: String,
+        trim: true,
+        maxlength: [200, 'Description cannot be more than 200 characters'],
+        default: ''
+    },
     time: {
         type: Date,
         required: [true, 'Please provide time'],

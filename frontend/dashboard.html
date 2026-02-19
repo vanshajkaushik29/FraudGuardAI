@@ -93,25 +93,34 @@
             </div>
             
             <!-- Add Transaction Section -->
-            <div id="add-transaction" class="section">
-                <h2>Add New Transaction</h2>
-                <form onsubmit="handleAddTransaction(event)" class="add-form">
-                    <div class="form-group">
-                        <label for="transaction-amount">Amount (₹)</label>
-                        <input type="number" id="transaction-amount" step="0.01" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="transaction-location">Location</label>
-                        <input type="text" id="transaction-location" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="transaction-time">Date & Time</label>
-                        <input type="datetime-local" id="transaction-time" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Check for Fraud & Save</button>
-                </form>
-                <div id="fraud-result" class="fraud-result" style="display: none;"></div>
-            </div>
+<div id="add-transaction" class="section">
+    <h2>Add New Transaction</h2>
+    <form onsubmit="handleAddTransaction(event)" class="add-form">
+        <div class="form-group">
+            <label for="transaction-amount">Amount (₹)</label>
+            <input type="number" id="transaction-amount" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="transaction-location">Location</label>
+            <input type="text" id="transaction-location" required>
+        </div>
+        <!-- NEW: Description Field -->
+        <div class="form-group">
+            <label for="transaction-description">Description (Optional)</label>
+            <input type="text" id="transaction-description" 
+                   placeholder="e.g., Uber ride, Swiggy order, Hospital bill...">
+            <small style="color: #666; display: block; margin-top: 5px;">
+                💡 Helps detect fraud better - "Uber" = safe, "URGENT PAYMENT" = suspicious
+            </small>
+        </div>
+        <div class="form-group">
+            <label for="transaction-time">Date & Time</label>
+            <input type="datetime-local" id="transaction-time" required>
+        </div>
+        <button type="submit" class="btn-primary">Check for Fraud & Save</button>
+    </form>
+    <div id="fraud-result" class="fraud-result" style="display: none;"></div>
+</div>
             
             <!-- Add Expense Section -->
             <div id="add-expense" class="section">

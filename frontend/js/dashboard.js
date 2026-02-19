@@ -169,6 +169,7 @@ function renderRecentActivity(activities) {
                         <strong>Transaction</strong>
                         <div>Amount: ₹${activity.data.amount}</div>
                         <div>Location: ${activity.data.location}</div>
+                        ${activity.data.description ? `<div style="font-size: 12px; color: #666;">📝 ${activity.data.description}</div>` : ''}
                     </div>
                     <div>
                         ${activity.data.fraudResult?.isFraud ? 
@@ -221,20 +222,24 @@ function renderTransactions(transactions) {
     
     let html = '';
     transactions.forEach(t => {
+        const fraudClass = t.fraudResult?.isFraud ? 'fraud' : '';
+        const confidence = t.fraudResult?.confidence ? (t.fraudResult.confidence * 100).toFixed(1) : '0';
+        
         html += `
-            <div class="transaction-item ${t.fraudResult?.isFraud ? 'fraud' : ''}">
-                <div>
+            <div class="transaction-item ${fraudClass}">
+                <div style="flex: 2;">
                     <strong>Amount: ₹${t.amount}</strong>
-                    <div>Location: ${t.location}</div>
+                    <div>📍 ${t.location}</div>
+                    ${t.description ? `<div style="color: #666; font-size: 13px; margin-top: 5px;">📝 "${t.description}"</div>` : ''}
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <div>${new Date(t.time).toLocaleString()}</div>
                     ${t.fraudResult?.isFraud ? 
-                        '<span style="color: #f56565; font-weight: bold;">FRAUD ALERT</span>' : 
-                        '<span style="color: #48bb78;">Legitimate</span>'}
+                        '<span style="color: #f56565; font-weight: bold;">🚨 FRAUD ALERT</span>' : 
+                        '<span style="color: #48bb78;">✓ Legitimate</span>'}
                 </div>
-                <div>
-                    <small>Confidence: ${(t.fraudResult?.confidence * 100).toFixed(1)}%</small>
+                <div style="flex: 0.5; text-align: right;">
+                    <small>${confidence}%</small>
                 </div>
             </div>
         `;
@@ -316,19 +321,22 @@ function renderFraudAlerts(transactions) {
     
     let html = '';
     transactions.forEach(t => {
+        const confidence = t.fraudResult?.confidence ? (t.fraudResult.confidence * 100).toFixed(1) : '0';
+        
         html += `
             <div class="fraud-item">
-                <div>
+                <div style="flex: 2;">
                     <strong>⚠️ Fraudulent Transaction</strong>
                     <div>Amount: ₹${t.amount}</div>
                     <div>Location: ${t.location}</div>
+                    ${t.description ? `<div style="color: #666;">📝 ${t.description}</div>` : ''}
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <div>Time: ${new Date(t.time).toLocaleString()}</div>
                     <div>Detected: ${new Date(t.fraudResult.checkedAt).toLocaleString()}</div>
                 </div>
-                <div>
-                    <small>Confidence: ${(t.fraudResult.confidence * 100).toFixed(1)}%</small>
+                <div style="flex: 0.5; text-align: right;">
+                    <small>Confidence: ${confidence}%</small>
                 </div>
             </div>
         `;
@@ -357,14 +365,12 @@ function renderPagination(type, pagination) {
 }
 
 // Handle add transaction
-// Handle add transaction
-// Handle add transaction
-// Handle add transaction
 async function handleAddTransaction(event) {
     event.preventDefault();
     
     const amount = document.getElementById('transaction-amount').value;
     const location = document.getElementById('transaction-location').value;
+    const description = document.getElementById('transaction-description').value;
     const timeInput = document.getElementById('transaction-time').value;
     
     if (!timeInput) {
@@ -372,43 +378,76 @@ async function handleAddTransaction(event) {
         return;
     }
     
-    // Fix timezone issue - keep the exact time selected
+    // Convert to ISO string
     const selectedDate = new Date(timeInput);
-    // Don't adjust for timezone - send the local time as-is
     const timeISO = selectedDate.toISOString();
     
-    console.log('Original input:', timeInput);
-    console.log('Selected date:', selectedDate.toString());
-    console.log('Sending ISO:', timeISO);
+    console.log('Sending transaction:', { 
+        amount, 
+        location, 
+        description, 
+        time: timeISO 
+    });
     
     try {
-        const result = await createTransaction(parseFloat(amount), location, timeISO);
+        const result = await createTransaction(
+            parseFloat(amount), 
+            location, 
+            timeISO,
+            description
+        );
+        
         console.log('Transaction result:', result);
         
         if (result.success) {
             const fraudResult = document.getElementById('fraud-result');
             fraudResult.style.display = 'block';
             
+            // Get description analysis and reasons
+            const descAnalysis = result.data.transaction.fraudResult.description_analysis;
+            const reasons = descAnalysis?.reasons || [];
+            
+            let reasonsHtml = '';
+            if (reasons.length > 0) {
+                reasonsHtml = `
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; text-align: left;">
+                        <strong>🔍 Analysis:</strong>
+                        <ul style="margin: 5px 0 0 20px; color: #555;">
+                            ${reasons.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
             if (result.data.fraudAlert) {
                 fraudResult.className = 'fraud-result fraud';
                 fraudResult.innerHTML = `
                     <h3>⚠️ FRAUD ALERT!</h3>
                     <p>This transaction has been flagged as potentially fraudulent.</p>
-                    <p>Amount: ₹${amount}</p>
-                    <p>Confidence: ${(result.data.transaction.fraudResult.confidence * 100).toFixed(1)}%</p>
+                    <p><strong>Amount:</strong> ₹${amount}</p>
+                    <p><strong>Location:</strong> ${location}</p>
+                    ${description ? `<p><strong>Description:</strong> "${description}"</p>` : ''}
+                    <p><strong>Confidence:</strong> ${(result.data.transaction.fraudResult.confidence * 100).toFixed(1)}%</p>
+                    ${reasonsHtml}
                 `;
             } else {
                 fraudResult.className = 'fraud-result safe';
                 fraudResult.innerHTML = `
                     <h3>✓ Transaction Safe</h3>
                     <p>This transaction appears to be legitimate.</p>
-                    <p>Amount: ₹${amount}</p>
-                    <p>Confidence: ${(result.data.transaction.fraudResult.confidence * 100).toFixed(1)}%</p>
+                    <p><strong>Amount:</strong> ₹${amount}</p>
+                    <p><strong>Location:</strong> ${location}</p>
+                    ${description ? `<p><strong>Description:</strong> "${description}"</p>` : ''}
+                    <p><strong>Confidence:</strong> ${(result.data.transaction.fraudResult.confidence * 100).toFixed(1)}%</p>
+                    ${reasonsHtml}
                 `;
             }
             
             // Reset form
-            event.target.reset();
+            document.getElementById('transaction-amount').value = '';
+            document.getElementById('transaction-location').value = '';
+            document.getElementById('transaction-description').value = '';
+            document.getElementById('transaction-time').value = '';
             
             // Refresh data if on overview
             if (currentSection === 'overview') {
@@ -420,6 +459,7 @@ async function handleAddTransaction(event) {
         alert('Error creating transaction: ' + error.message);
     }
 }
+
 // Handle add expense
 async function handleAddExpense(event) {
     event.preventDefault();
@@ -427,14 +467,24 @@ async function handleAddExpense(event) {
     const amount = document.getElementById('expense-amount').value;
     const category = document.getElementById('expense-category').value;
     const description = document.getElementById('expense-description').value;
-    const date = new Date(document.getElementById('expense-date').value).toISOString();
+    const date = document.getElementById('expense-date').value;
+    
+    if (!date) {
+        alert('Please select a date');
+        return;
+    }
     
     try {
-        const result = await createExpense(amount, category, description, date);
+        const result = await createExpense(amount, category, description, new Date(date).toISOString());
         
         if (result.success) {
             alert('Expense added successfully!');
-            event.target.reset();
+            
+            // Reset form
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-category').value = 'Food';
+            document.getElementById('expense-description').value = '';
+            document.getElementById('expense-date').value = '';
             
             // Refresh data if on overview
             if (currentSection === 'overview') {
@@ -472,7 +522,6 @@ document.getElementById('transaction-search')?.addEventListener('input', (e) => 
 
 // Logout
 function logout() {
-    // Clear token and redirect
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';

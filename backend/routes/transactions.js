@@ -15,7 +15,8 @@ router.use(protect);
 router.post('/', [
     body('amount').isFloat({ min: 0 }).withMessage('Amount must be a positive number'),
     body('location').notEmpty().withMessage('Location is required'),
-    body('time').isISO8601().withMessage('Valid date is required')
+    body('time').isISO8601().withMessage('Valid date is required'),
+    body('description').optional().isString().trim()
 ], async (req, res) => {
     try {
         // Check for validation errors
@@ -27,23 +28,36 @@ router.post('/', [
             });
         }
 
-        const { amount, location, time } = req.body;
+        const { amount, location, time, description = '' } = req.body;
 
         // Call AI service for fraud detection
-        let fraudResult = { isFraud: false, confidence: 0 };
+        let fraudResult = { 
+            isFraud: false, 
+            confidence: 0,
+            description_analysis: {},
+            reasons: []
+        };
         
         try {
+            console.log('Calling AI service with:', { amount, location, time, description });
+            
             const aiResponse = await axios.post(`${process.env.AI_SERVICE_URL}/predict`, {
                 amount: parseFloat(amount),
                 location,
-                time: new Date(time).getTime()
+                time: new Date(time).getTime(),
+                description
             });
+            
+            console.log('AI Response:', aiResponse.data);
             
             fraudResult = {
                 isFraud: aiResponse.data.fraud,
                 confidence: aiResponse.data.confidence || 0.5,
+                description_analysis: aiResponse.data.description_analysis || {},
+                reasons: aiResponse.data.description_analysis?.reasons || [],
                 checkedAt: new Date()
             };
+            
         } catch (aiError) {
             console.error('AI service error:', aiError.message);
             // Continue with default fraud result if AI service fails
@@ -54,6 +68,7 @@ router.post('/', [
             user: req.user._id,
             amount,
             location,
+            description,
             time,
             fraudResult
         });
@@ -65,8 +80,9 @@ router.post('/', [
                 fraudAlert: fraudResult.isFraud
             }
         });
+        
     } catch (error) {
-        console.error(error);
+        console.error('Server error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'
